@@ -12,6 +12,13 @@ Release only after the exact dependency versions already exist in npm.
 The publish workflow validates package/tag alignment, reruns the full gate,
 tests a clean consumer install, and publishes with npm provenance.
 
+For the first publication of this new scoped package, add a repository Actions
+secret named `NPM_TOKEN` containing a granular npm token with permission to
+publish new `@jurgen1c` packages and bypass 2FA. After the bootstrap release,
+remove the secret and configure npm Trusted Publishing for GitHub user
+`jurgen1c`, repository `agentic_development`, workflow `publish.yml`, allowed
+action `npm publish`, and no environment.
+
 If a GitHub release exists but npm publication failed and the version remains
 unused, fix the cause, delete that failed GitHub release and tag, then recreate
 the same version from the corrected commit. Never move a version that exists in
