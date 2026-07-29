@@ -11,6 +11,8 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN_CONFIGURED: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,6 +28,11 @@ jobs:
       - run: node scripts/verify-release.mjs
       - run: bun run ci
       - run: bun run verify:package
-      - run: npm publish --access public --provenance
+      - name: Publish with bootstrap token
+        if: env.NPM_TOKEN_CONFIGURED == 'true'
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish with Trusted Publishing
+        if: env.NPM_TOKEN_CONFIGURED != 'true'
+        run: npm publish --access public --provenance
