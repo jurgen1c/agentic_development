@@ -8,6 +8,7 @@ const packageJson = JSON.parse(
 ) as {
   bin?: Record<string, string>;
   dependencies?: Record<string, string>;
+  engines?: { node?: string };
   exports?: Record<string, unknown>;
   version: string;
 };
@@ -16,6 +17,7 @@ describe("umbrella architecture", () => {
   test("depends on independently versioned public Memory and Flow packages", () => {
     expect(packageJson.version).toBe("0.1.0");
     expect(packageJson.bin).toBeUndefined();
+    expect(packageJson.engines?.node).toBe(">=25.9.0");
     expect(packageJson.dependencies).toEqual({
       "@jurgen1c/agent-flow": "^0.1.0",
       "@jurgen1c/agent-memory-cli": "^0.3.0"
@@ -43,5 +45,26 @@ describe("umbrella architecture", () => {
     expect(lockfile).not.toMatch(/file:\/|workspace:|\/tmp\//i);
     expect(lockfile).toContain('"@jurgen1c/agent-flow@0.1.0"');
     expect(lockfile).toContain('"@jurgen1c/agent-memory-cli@0.3.0"');
+  });
+
+  test("tests and publishes with the supported Node toolchain", () => {
+    const ciWorkflow = fs.readFileSync(
+      path.join(root, ".github", "workflows", "ci.yml"),
+      "utf8"
+    );
+    const publishWorkflow = fs.readFileSync(
+      path.join(root, ".github", "workflows", "publish.yml"),
+      "utf8"
+    );
+
+    for (const workflow of [ciWorkflow, publishWorkflow]) {
+      expect(workflow).toContain("actions/checkout@v7");
+      expect(workflow).toContain("actions/setup-node@v6");
+      expect(workflow).toContain("node-version: 25.9.0");
+      expect(workflow).toContain("bun install --frozen-lockfile");
+    }
+
+    expect(publishWorkflow).toContain("release:");
+    expect(publishWorkflow).toContain("npm publish --provenance --access public");
   });
 });
